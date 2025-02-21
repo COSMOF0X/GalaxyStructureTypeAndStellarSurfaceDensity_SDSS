@@ -31,7 +31,6 @@ ellipticalDeVanRadRBand = ellipticalGalDataCSV['DeVancoulerGalRad_bandR_arcsec']
 
 # Create galaxy morphology type array:
 galMorphTypeNames = ["Spiral\n(Sample Size: 10,000 Galaxies)", "Elliptical\n(Sample Size: 10,000 Galaxies)"]
-galMorphTypeNums = [1, 2]
 
 # Functions for data analysis:
 def stelSurfDen(stelMass, rad):
@@ -42,7 +41,7 @@ def stdError(data):
     # SE = σ / √(N)
     return ((np.std(data, ddof = 1)) / ((data.size)**0.5))
 
-def analyzeStelSurfDenandGalType(galTypeNums, galTypeNames, stelMassSpiral, radSpiral, stelMassElliptical, radElliptical):
+def analyzeStelSurfDenandGalType(galTypeNames, stelMassSpiral, radSpiral, stelMassElliptical, radElliptical):
     # Spiral:
     stelSurfDenDataSpiral = stelSurfDen(stelMassSpiral, radSpiral)
     stelSurfDenAvgSpiral = np.mean(stelSurfDenDataSpiral)
@@ -53,23 +52,29 @@ def analyzeStelSurfDenandGalType(galTypeNums, galTypeNames, stelMassSpiral, radS
     stelSurfDenAvgElliptical = np.mean(stelSurfDenDataElliptical)
     stelSurfDenErrorElliptical = stdError(stelSurfDenDataElliptical)
 
-    # group Spiral and Elliptical:
-    avgStelSurfDen = [stelSurfDenAvgSpiral, stelSurfDenAvgElliptical]
-    stelSurfDenError = [stelSurfDenErrorSpiral, stelSurfDenErrorElliptical]
+    # Group spiral and elliptical:
+    avgStelSurfDens = [stelSurfDenAvgSpiral, stelSurfDenAvgElliptical]
+    stelSurfDenErrors = [stelSurfDenErrorSpiral, stelSurfDenErrorElliptical]
+
+    # Set up display parameters:
+    barGraphColors = ['blue', 'orange']
+    errorParams = {'ecolor': 'red', 'elinewidth': 2, 'capsize': 20, 'capthick': 2}
 
     # Display Data
     plt.figure()
-    plt.errorbar(galTypeNums[0], avgStelSurfDen[0], yerr = stelSurfDenError[0], fmt = 'o', markersize = 8)
-    plt.errorbar(galTypeNums[1], avgStelSurfDen[1], yerr = stelSurfDenError[1], fmt = 'o', markersize = 8)
+    plt.bar(galTypeNames, avgStelSurfDens, yerr = stelSurfDenErrors, color = barGraphColors, edgecolor = 'black', linewidth = 2, error_kw = errorParams)
 
-    plt.xticks(galTypeNums, galTypeNames)
     plt.yscale('log')
     plt.xlabel("Galaxy Morphological Type")
     plt.ylabel("Average Stellar Surface Density (M☉/(arcsecond^2))")
     plt.title("Galaxy Average Stellar Surface Density and Morphological Type\n(Derived from SDSS DR18)")
+
+    plt.tight_layout()
+    plt.savefig("Graphs/avgStelSurfDenandGalMorphType.png")
+
     plt.show()
 
-    plt.savefig("avgStelSurfDenandGalMorphType.png")
     return
 
-analyzeStelSurfDenandGalType(galMorphTypeNums, galMorphTypeNames, spiralMedStelMass, spiralExpRadRBand, ellipticalMedStelMass, ellipticalDeVanRadRBand)
+# Call function:
+analyzeStelSurfDenandGalType(galMorphTypeNames, spiralMedStelMass, spiralExpRadRBand, ellipticalMedStelMass, ellipticalDeVanRadRBand)
