@@ -45,9 +45,16 @@ def stdError(data):
     return ((np.std(data, ddof = 1)) / ((data.size)**0.5))
 
 def tTest(groups):
+    # Use T-Test to find out how statistically significant the difference is between two pieces of data.
     tStat, pVal = stats.ttest_ind(groups[0], groups[1])
 
     return np.array([tStat, pVal])
+
+def correlTest(x, y):
+    # Use the Correlation Test to find out how statistically significant and strong the relationship is between two variables.
+    correlCoeff, pVal = stats.spearmanr(x, y)
+
+    return np.array([correlCoeff, pVal])
 
 def analyzeAvgStelSurfDenandGalType(galTypeNames, stelMassSpiral, radSpiral, stelMassElliptical, radElliptical):
     # Spiral:
@@ -87,8 +94,8 @@ def analyzeAvgStelSurfDenandGalType(galTypeNames, stelMassSpiral, radSpiral, ste
 
     print(f"Average Stellar Surface Density (Spiral): {avgStelSurfDens[0]:.10}")
     print(f"Average Stellar Surface Density (Elliptical): {avgStelSurfDens[1]:.10}")
-    print(f"T-Statistic: {tResult[0]:.10e}")
-    print(f"P-Value: {tResult[1]:.10e}")
+    print(f"T-Test T-Statistic: {tResult[0]:.10e}")
+    print(f"T-Test P-Value: {tResult[1]:.10e}")
 
     return
 
@@ -128,8 +135,8 @@ def analyzeAvgMedStelMassandGalType(galTypeNames, stelMassSpiral, stelMassEllipt
 
     print(f"Average Stellar Median Mass (Spiral): {avgStelMasses[0]:.10}")
     print(f"Average Stellar Median Mass (Elliptical): {avgStelMasses[1]:.10}")
-    print(f"T-Statistic: {tResult[0]:.10e}")
-    print(f"P-Value: {tResult[1]:.10e}")
+    print(f"T-Test T-Statistic: {tResult[0]:.10e}")
+    print(f"T-Test P-Value: {tResult[1]:.10e}")
 
     return
 
@@ -169,8 +176,8 @@ def analyzeAvgGalRadandGalType(galTypeNames, radSpiral, radElliptical):
 
     print(f"Average Stellar Median Mass (Spiral): {avgGalRads[0]:.10}")
     print(f"Average Stellar Median Mass (Elliptical): {avgGalRads[1]:.10}")
-    print(f"T-Statistic: {tResult[0]:.10e}")
-    print(f"P-Value: {tResult[1]:.10e}")
+    print(f"T-Test T-Statistic: {tResult[0]:.10e}")
+    print(f"T-Test P-Value: {tResult[1]:.10e}")
 
     return
 
@@ -180,6 +187,10 @@ def analyzeStelSurfDenandRedshift(galTypeNames, stelMassSpiral, radSpiral, zSpir
 
     # Elliptical:
     stelSurfDenDataElliptical = stelSurfDen(stelMassElliptical, radElliptical)
+
+    # Pearson Correlational Test:
+    correlResultSpiral = correlTest(zSpiral, stelMassSpiral)
+    correlResultElliptical = correlTest(zElliptical, stelMassElliptical)
 
     # Display Data:
     plt.clf()
@@ -200,6 +211,11 @@ def analyzeStelSurfDenandRedshift(galTypeNames, stelMassSpiral, radSpiral, zSpir
     figStelSurfDenandZ.suptitle("Galaxy Average Stellar Surface Density and Redshift\n(Derived from SDSS DR18)", fontweight = 'bold')
 
     plt.savefig("Graphs/avgStelSurfDenandGalRedshift.png", bbox_inches= 'tight')
+
+    print(f"Correlation Coefficient (Spiral): {correlResultSpiral[0]}")
+    print(f"Correlation P-value (Spiral): {correlResultSpiral[1]:.10e}")
+    print(f"Correlation Coefficient (Elliptical): {correlResultElliptical[0]}")
+    print(f"Correlation P-value (Elliptical): {correlResultElliptical[1]:.10e}")
 
     return
 
