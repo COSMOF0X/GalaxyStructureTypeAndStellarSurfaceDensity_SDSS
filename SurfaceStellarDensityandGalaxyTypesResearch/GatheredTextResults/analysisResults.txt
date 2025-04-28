@@ -1,9 +1,9 @@
 NOTE: THIS WAS COPY AND PASTED FROM TERMINAL OUTPUT FROM dataAnalysis.py
 
 Average Stellar Surface Density and Galaxy Type:
-Average Stellar Surface Density (Spiral): 4.053317539e+09
-Average Stellar Surface Density (Elliptical): 1.212282891e+10
-T-Test T-Statistic: -6.0035197325e+01
+Average Stellar Surface Density (Spiral): 996897275.4
+Average Stellar Surface Density (Elliptical): 1.90006185e+09
+T-Test T-Statistic: -4.8395643512e+01
 T-Test P-Value: 0.0000000000e+00
 
 Average Stellar Median Mass and Galaxy Type:
@@ -13,13 +13,13 @@ T-Test T-Statistic: -9.6469927672e+01
 T-Test P-Value: 0.0000000000e+00
 
 Average Galaxy Radius and Galaxy Type:
-Average Stellar Median Mass (Spiral): 3.566529871
-Average Stellar Median Mass (Elliptical): 3.483873447
-T-Test T-Statistic: 2.9902824903e+00
-T-Test P-Value: 2.7905880681e-03
+Average Stellar Median Mass (Spiral): 5.533554564
+Average Stellar Median Mass (Elliptical): 7.604189171
+T-Test T-Statistic: -3.9948528996e+01
+T-Test P-Value: 0.0000000000e+00
 
 Stellar Surface Density and Redshift:
-Correlation Coefficient (Spiral): 0.6383918969697985
-Correlation P-value (Spiral): 0.0000000000e+00
-Correlation Coefficient (Elliptical): 0.764528185218383
-Correlation P-value (Elliptical): 0.0000000000e+00
+Correlation Coefficient (Spiral): 0.3434517565119122
+Correlation P-value (Spiral): 7.3095449196e-275
+Correlation Coefficient (Elliptical): -0.12176619883750678
+Correlation P-value (Elliptical): 2.4131418349e-34

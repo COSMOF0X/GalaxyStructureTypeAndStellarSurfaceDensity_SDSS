@@ -1,5 +1,6 @@
 import math
 from scipy import stats
+from astropy.cosmology import Planck18 as p18
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,6 +12,7 @@ ellipticalGalDataCSV = pd.read_csv('SkyserverData/SkyServerDR18_EllipticalStella
 # Eliminate any whitespace in the column names in the CSV files:
 spiralGalDataCSV.columns = spiralGalDataCSV.columns.str.strip()
 ellipticalGalDataCSV.columns = ellipticalGalDataCSV.columns.str.strip()
+
 
 # Unpack spiral galaxy data:
 spiralSloanID = spiralGalDataCSV['ID'].to_numpy()
@@ -30,19 +32,28 @@ ellipticalMedStelMassRaw = ellipticalGalDataCSV['MedianStellarMass_dex_solarmass
 ellipticalMedStelMass = np.power(10, ellipticalMedStelMassRaw)
 ellipticalDeVanRadRBand = ellipticalGalDataCSV['DeVancoulerGalRad_bandR_arcsec'].to_numpy()
 
+
 # Create galaxy morphology type array:
 galMorphTypeNames1 = np.array(["Spiral\n(Sample Size: 10,000 Galaxies)", "Elliptical\n(Sample Size: 10,000 Galaxies)"])
 galMorphTypeNames2 = np.array(["Spiral (Sample Size: 10,000 Galaxies)", "Elliptical (Sample Size: 10,000 Galaxies)"])
 
 
-# Functions for data analysis:
-def stelSurfDen(stelMass, rad):
+# Functions for calculations of data:
+def stelSurfDen(stelMass, physRad):
     # SD* = M* / π(R^2)
-    return (stelMass / (math.pi * (rad)**2))
+    return (stelMass / (math.pi * (physRad)**2))
 
 def stdError(data):
     # SE = σ / √(N)
     return ((np.std(data, ddof = 1)) / ((data.size)**0.5))
+
+def galRadKPC(redshift, arcsecRad):
+    # R (in units kpc) = Da * θ * 1000
+    angDiamDist = p18.angular_diameter_distance(redshift).value
+
+    radianRad = arcsecRad / 206264.8062471
+
+    return ((angDiamDist * radianRad) * 1000)
 
 def tTest(groups):
     # Use T-Test to find out how statistically significant the difference is between two pieces of data.
@@ -56,14 +67,17 @@ def correlTest(x, y):
 
     return np.array([correlCoeff, pVal])
 
-def analyzeAvgStelSurfDenandGalType(galTypeNames, stelMassSpiral, radSpiral, stelMassElliptical, radElliptical):
+# Functions for data analysis:
+def analyzeAvgStelSurfDenandGalType(galTypeNames, stelMassSpiral, radSpiral, zSpiral, stelMassElliptical, radElliptical, zElliptical):
     # Spiral:
-    stelSurfDenDataSpiral = stelSurfDen(stelMassSpiral, radSpiral)
+    radPhysSpiral = galRadKPC(zSpiral, radSpiral)
+    stelSurfDenDataSpiral = stelSurfDen(stelMassSpiral, radPhysSpiral)
     stelSurfDenAvgSpiral = np.mean(stelSurfDenDataSpiral)
     stelSurfDenErrorSpiral = stdError(stelSurfDenDataSpiral)
 
     # Elliptical:
-    stelSurfDenDataElliptical = stelSurfDen(stelMassElliptical, radElliptical)
+    radPhysElliptical = galRadKPC(zElliptical, radElliptical)
+    stelSurfDenDataElliptical = stelSurfDen(stelMassElliptical, radPhysElliptical)
     stelSurfDenAvgElliptical = np.mean(stelSurfDenDataElliptical)
     stelSurfDenErrorElliptical = stdError(stelSurfDenDataElliptical)
 
@@ -74,6 +88,7 @@ def analyzeAvgStelSurfDenandGalType(galTypeNames, stelMassSpiral, radSpiral, ste
 
     # T-Test:
     tResult = tTest(stelSurfDenDataGrouped)
+
 
     # Set up display parameters:
     barGraphColors = ['cyan', 'orange']
@@ -86,7 +101,7 @@ def analyzeAvgStelSurfDenandGalType(galTypeNames, stelMassSpiral, radSpiral, ste
 
     plt.yscale('log')
     plt.xlabel("Galaxy Morphological Type", fontweight = 'bold')
-    plt.ylabel("Average Stellar Surface Density (M☉/(arcsecond^2))", fontweight = 'bold')
+    plt.ylabel("Average Stellar Surface Density (M☉/(kpc^2))", fontweight = 'bold')
     plt.title("Galaxy Average Stellar Surface Density and Morphological Type\n(Derived from SDSS DR18)", fontweight = 'bold')
 
     plt.tight_layout()
@@ -140,17 +155,19 @@ def analyzeAvgMedStelMassandGalType(galTypeNames, stelMassSpiral, stelMassEllipt
 
     return
 
-def analyzeAvgGalRadandGalType(galTypeNames, radSpiral, radElliptical):
+def analyzeAvgGalRadandGalType(galTypeNames, radSpiral, zSpiral, radElliptical, zElliptical):
     # Spiral:
-    galRadAvgSpiral = np.mean(radSpiral)
-    galRadErrorSpiral = stdError(radSpiral)
+    radPhysSpiral = galRadKPC(zSpiral, radSpiral)
+    galRadAvgSpiral = np.mean(radPhysSpiral)
+    galRadErrorSpiral = stdError(radPhysSpiral)
 
     # Elliptical:
-    galRadAvgElliptical = np.mean(radElliptical)
-    galRadErrorElliptical = stdError(radElliptical)
+    radPhysElliptical = galRadKPC(zElliptical, radElliptical)
+    galRadAvgElliptical = np.mean(radPhysElliptical)
+    galRadErrorElliptical = stdError(radPhysElliptical)
 
     # Group spiral and elliptical:
-    galRadDataGrouped = np.array([radSpiral, radElliptical])
+    galRadDataGrouped = np.array([radPhysSpiral, radPhysElliptical])
     avgGalRads = np.array([galRadAvgSpiral, galRadAvgElliptical])
     galRadErrors = np.array([galRadErrorSpiral, galRadErrorElliptical])
 
@@ -168,7 +185,7 @@ def analyzeAvgGalRadandGalType(galTypeNames, radSpiral, radElliptical):
 
     plt.yscale('log')
     plt.xlabel("Galaxy Morphological Type", fontweight = 'bold')
-    plt.ylabel("Average Galaxy Radius (arcsecond)", fontweight = 'bold')
+    plt.ylabel("Average Galaxy Radius (kiloparsec)", fontweight = 'bold')
     plt.title("Galaxy Average Radius and Morphological Type\n(Derived from SDSS DR18)", fontweight = 'bold')
 
     plt.tight_layout()
@@ -183,14 +200,16 @@ def analyzeAvgGalRadandGalType(galTypeNames, radSpiral, radElliptical):
 
 def analyzeStelSurfDenandRedshift(galTypeNames, stelMassSpiral, radSpiral, zSpiral, stelMassElliptical, radElliptical, zElliptical):
     # Spiral:
-    stelSurfDenDataSpiral = stelSurfDen(stelMassSpiral, radSpiral)
+    radPhysSpiral = galRadKPC(zSpiral, radSpiral)
+    stelSurfDenDataSpiral = stelSurfDen(stelMassSpiral, radPhysSpiral)
 
     # Elliptical:
-    stelSurfDenDataElliptical = stelSurfDen(stelMassElliptical, radElliptical)
+    radPhysElliptical = galRadKPC(zElliptical, radElliptical)
+    stelSurfDenDataElliptical = stelSurfDen(stelMassElliptical, radPhysElliptical)
 
     # Pearson Correlational Test:
-    correlResultSpiral = correlTest(zSpiral, stelMassSpiral)
-    correlResultElliptical = correlTest(zElliptical, stelMassElliptical)
+    correlResultSpiral = correlTest(zSpiral, stelSurfDenDataSpiral)
+    correlResultElliptical = correlTest(zElliptical, stelSurfDenDataElliptical)
 
     # Display Data:
     plt.clf()
@@ -219,15 +238,16 @@ def analyzeStelSurfDenandRedshift(galTypeNames, stelMassSpiral, radSpiral, zSpir
 
     return
 
+
 # Call function:
 print("Average Stellar Surface Density and Galaxy Type:")
-analyzeAvgStelSurfDenandGalType(galMorphTypeNames1, spiralMedStelMass, spiralExpRadRBand, ellipticalMedStelMass, ellipticalDeVanRadRBand)
+analyzeAvgStelSurfDenandGalType(galTypeNames = galMorphTypeNames1, stelMassSpiral = spiralMedStelMass, radSpiral = spiralExpRadRBand, zSpiral = spiralZ, stelMassElliptical = ellipticalMedStelMass, radElliptical = ellipticalDeVanRadRBand, zElliptical = ellipticalZ)
 
 print("\nAverage Stellar Median Mass and Galaxy Type:")
-analyzeAvgMedStelMassandGalType(galMorphTypeNames1, spiralMedStelMass, ellipticalMedStelMass)
+analyzeAvgMedStelMassandGalType(galTypeNames = galMorphTypeNames1, stelMassSpiral = spiralMedStelMass, stelMassElliptical = ellipticalMedStelMass)
 
 print("\nAverage Galaxy Radius and Galaxy Type:")
-analyzeAvgGalRadandGalType(galMorphTypeNames1, spiralExpRadRBand, ellipticalDeVanRadRBand)
+analyzeAvgGalRadandGalType(galTypeNames = galMorphTypeNames1, radSpiral = spiralExpRadRBand, zSpiral = spiralZ, radElliptical = ellipticalDeVanRadRBand, zElliptical = ellipticalZ)
 
 print("\nStellar Surface Density and Redshift:")
-analyzeStelSurfDenandRedshift(galMorphTypeNames2, spiralMedStelMass, spiralExpRadRBand, spiralZ, ellipticalMedStelMass, ellipticalDeVanRadRBand, ellipticalZ)
+analyzeStelSurfDenandRedshift(galTypeNames = galMorphTypeNames2, stelMassSpiral = spiralMedStelMass, radSpiral = spiralExpRadRBand, zSpiral = spiralZ, stelMassElliptical = ellipticalMedStelMass, radElliptical = ellipticalDeVanRadRBand, zElliptical = ellipticalZ)
